@@ -1,0 +1,23 @@
+{
+  "project" : "Project",
+  "help" : "Help",
+  "save" : "Save",
+  "save-as": "Save As",
+  "open" : "Open",
+  "new" : "New",
+  "quit" : "Quit",
+  "about" : "About",
+  "strengths" : "Strengths",
+  "weaknesses" : "Weaknesses",
+  "oportunities" : "Oportunities",
+  "threats" : "Threats",
+  "map" : "Map",
+  "summary" : "Summary",
+  "name": "Name",
+  "weight" : "Weight",
+  "add" : "Add",
+  "delete": "Delete",
+  "connections": "Connections",
+  "file-format-error": "Wrong file format."
+
+}
