@@ -50,6 +50,11 @@ object Project {
 
   def open(path: String) { 
     val source = io.Source.fromFile(path)
+  
+    def transform (data: DataRow) : Property = {
+      new Property(data.name, data.weight)
+    }
+    
     try { 
       val lines = source.mkString
       source.close ()
@@ -58,16 +63,55 @@ object Project {
       weaknessesModel.data = fileData.weaknesses.map(transform)
       oportunitiesModel.data = fileData.oportunities.map(transform)
       threatsModel.data = fileData.threats.map(transform)
-     
+
+      for (strengthIndex <- List.range(0, fileData.so.length)) {
+        for (oportunityIndex <- List.range(0, fileData.so(strengthIndex).length)) {
+          strengthsModel.data(strengthIndex).connections =
+            strengthsModel.data(strengthIndex).connections ++ 
+            Array((
+              fileData.so(strengthIndex)(oportunityIndex),
+              oportunitiesModel.data(oportunityIndex)
+            ))
+        }
+      }
+      
+      for (strengthIndex <- List.range(0, fileData.so.length)) {
+        for (threatIndex <- List.range(0, fileData.st(strengthIndex).length)) {
+          strengthsModel.data(strengthIndex).connections =
+            strengthsModel.data(strengthIndex).connections ++ 
+            Array((
+              fileData.st(strengthIndex)(threatIndex),
+              threatsModel.data(threatIndex)
+            ))
+        }
+      }
+      
+      for (weaknessIndex <- List.range(0, fileData.wo.length)) {
+        for (oportunityIndex <- List.range(0, fileData.so(weaknessIndex).length)) {
+          weaknessesModel.data(weaknessIndex).connections =
+            weaknessesModel.data(weaknessIndex).connections ++ 
+            Array((
+              fileData.wo(weaknessIndex)(oportunityIndex),
+              oportunitiesModel.data(oportunityIndex)
+            ))
+        }
+      }
+ 
+      for (weaknessIndex <- List.range(0, fileData.wt.length)) {
+        for (threatIndex <- List.range(0, fileData.wt(weaknessIndex).length)) {
+          weaknessesModel.data(weaknessIndex).connections =
+            weaknessesModel.data(weaknessIndex).connections ++ 
+            Array((
+              fileData.wt(weaknessIndex)(threatIndex),
+              weaknessesModel.data(threatIndex)
+            ))
+        }
+      }
+      
     } catch {
       case _ => throw new ProjectException("Wrong file format!")
     }
-    
-    def transform (data: DataRow) : Property = {
-      new Property(data.name, data.weight)
-    }
-    
- 
+   
 //    this.connectionModel.so = fileData.so
 //    this.connectionModel.wo = fileData.wo
 //    this.connectionModel.st = fileData.st
@@ -76,6 +120,68 @@ object Project {
 
   def save() {
     if (filename != null) {
+      val output = new java.io.FileWriter(filename)
+      
+      def transform (data: Property) : DataRow = {
+        new DataRow(data.name, data.weight)
+      }
+   
+      try {
+        var so : Array[Array[Double]] = Array()
+        var st : Array[Array[Double]] = Array()
+        var wo : Array[Array[Double]] = Array()
+        var wt : Array[Array[Double]] = Array()
+        
+        for (strengthIndex <- List.range(0, strengthsModel.data.length)) {
+          var current = strengthsModel.data(strengthIndex)
+          for (connectionIndex <- List.range(0, current.connections.length)) {
+            for(oportunityIndex <- List.range(0, oportunitiesModel.data.length)) {
+              if (current.connections(connectionIndex)._2 == oportunitiesModel.data(oportunityIndex)) {
+                so(strengthIndex)(oportunityIndex) = current.connections(connectionIndex)._1
+              }
+            }
+            for(threatIndex <- List.range(0, threatsModel.data.length)) {
+              if (current.connections(connectionIndex)._2 == threatsModel.data(threatIndex)) {
+                st(strengthIndex)(threatIndex) = current.connections(connectionIndex)._1
+              }
+            }
+          }
+        }
+
+        for (weaknessIndex <- List.range(0, weaknessesModel.data.length)) {
+          var current = weaknessesModel.data(weaknessIndex)
+          for (connectionIndex <- List.range(0, current.connections.length)) {
+            for(oportunityIndex <- List.range(0, oportunitiesModel.data.length)) {
+              if (current.connections(connectionIndex)._2 == oportunitiesModel.data(oportunityIndex)) {
+                wo(weaknessIndex)(oportunityIndex) = current.connections(connectionIndex)._1
+              }
+            }
+            for(threatIndex <- List.range(0, threatsModel.data.length)) {
+              if (current.connections(connectionIndex)._2 == threatsModel.data(threatIndex)) {
+                wt(weaknessIndex)(threatIndex) = current.connections(connectionIndex)._1
+              }
+            }
+          }
+        }
+
+
+        val fileData = new ProjectFileFormat (
+          strengthsModel.data.map(transform),
+          weaknessesModel.data.map(transform),
+          oportunitiesModel.data.map(transform),
+          threatsModel.data.map(transform),
+          so,
+          st,
+          wo,
+          wt
+        )
+
+        output.write(Serialization.write[ProjectFileFormat](fileData))
+        output.close()
+      } catch {
+        case _ => throw new ProjectException("Wrong file format!")
+      }
+
     } else {
       throw new ProjectException("No filename");
     }

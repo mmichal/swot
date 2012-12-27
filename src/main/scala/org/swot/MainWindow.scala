@@ -47,7 +47,7 @@ class MainWindow extends MainFrame {
     action = new Action(I18n("about")) {
       def apply = { about }
     }
-"Wrong file format!"  }
+  }
 
   val projectMenu = new Menu(I18n("project")) {
     contents += newMenuItem

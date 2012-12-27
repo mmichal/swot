@@ -13,9 +13,7 @@ class PropertiesTableModel extends AbstractTableModel {
     fireTableDataChanged()
   }
   
-  def data : Array[Property] = {
-    this._data
-  }
+  def data: Array[Property] = this._data
 
   def clear {
     _data = Array()
